@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banco dos Proibidos</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       background: #0e0e0e;
@@ -68,6 +67,10 @@
     <div class="modal-content" id="modal-content"></div>
   </div>
 
+  <!-- Primeiro carrega a lib do Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+
+  <!-- Agora o script principal -->
   <script>
     const supabaseUrl = 'https://ogcpmzljtgemrdmrwwit.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nY3BtemxqdGdlbXJkbXJ3d2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3ODM0MjYsImV4cCI6MjA2NTM1OTQyNn0.PSQCZ6Uxgw_CsP5FUwFMfN2rLc4e4_3SEuk7rzVfbLk';
