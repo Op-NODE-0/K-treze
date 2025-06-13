@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banco dos Proibidos</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #0e0e0e;
+      color: #e1e1e1;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 { color: #fff033; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 800px;
+    }
+    .caixa {
+      background: #1c1c1c;
+      padding: 1rem;
+      border: 1px solid #333;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .caixa.aberta {
+      background-color: #234d20;
+      border-color: #72f542;
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #111;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+    }
+    .modal-content iframe,
+    .modal-content img,
+    .modal-content video,
+    .modal-content audio {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏦 Banco dos Proibidos</h1>
+  <div class="grid" id="caixas"></div>
+
+  <div id="modal" class="modal" style="display: none;">
+    <div class="modal-content" id="modal-content"></div>
+  </div>
+
+  <script>
+    const supabaseUrl = 'https://ogcpmzljtgemrdmrwwit.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nY3BtemxqdGdlbXJkbXJ3d2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3ODM0MjYsImV4cCI6MjA2NTM1OTQyNn0.PSQCZ6Uxgw_CsP5FUwFMfN2rLc4e4_3SEuk7rzVfbLk';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const grid = document.getElementById('caixas');
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modal-content');
+
+    async function carregarCaixas() {
+      const { data, error } = await supabase.from('caixas').select('*');
+      if (error) return alert('Erro ao carregar caixas');
+
+      data.forEach(caixa => {
+        const el = document.createElement('div');
+        el.className = 'caixa' + (caixa.desbloqueado ? ' aberta' : '');
+        el.innerHTML = `<strong>Caixa #${String(caixa.id).padStart(3, '0')}</strong><br>${caixa.desbloqueado ? '🔓 Aberta' : '🔒 Trancada'}`;
+        el.onclick = () => abrirCaixa(caixa);
+        grid.appendChild(el);
+      });
+    }
+
+    async function abrirCaixa(caixa) {
+      if (caixa.desbloqueado) {
+        mostrarConteudo(caixa);
+        return;
+      }
+
+      const senha = prompt('Digite a senha da caixa #' + caixa.id);
+      if (senha === caixa.senha) {
+        const nome = prompt('Digite seu @ para registrar sua descoberta:');
+        await supabase.from('caixas').update({
+          desbloqueado: true,
+          descoberto_por: nome,
+          data_desbloqueio: new Date().toISOString()
+        }).eq('id', caixa.id);
+
+        caixa.desbloqueado = true;
+        caixa.descoberto_por = nome;
+        mostrarConteudo(caixa);
+        grid.innerHTML = '';
+        carregarCaixas();
+      } else {
+        alert('❌ Senha incorreta. A caixa permanece trancada.');
+      }
+    }
+
+    function mostrarConteudo(caixa) {
+      let html = `<p><strong>Descoberto por:</strong> @${caixa.descoberto_por}</p>`;
+      switch (caixa.conteudo_tipo) {
+        case 'texto':
+          html += `<p>${caixa.conteudo_texto}</p>`;
+          break;
+        case 'pdf':
+          html += `<iframe src="${caixa.conteudo_url}" width="100%" height="500px"></iframe>`;
+          break;
+        case 'imagem':
+          html += `<img src="${caixa.conteudo_url}" alt="Imagem da caixa" />`;
+          break;
+        case 'audio':
+          html += `<audio controls src="${caixa.conteudo_url}"></audio>`;
+          break;
+        case 'video':
+          html += `<video controls src="${caixa.conteudo_url}" width="100%"></video>`;
+          break;
+        case 'link':
+          html += `<p><a href="${caixa.conteudo_url}" target="_blank">Abrir conteúdo externo</a></p>`;
+          break;
+        default:
+          html += `<p>⚠️ Tipo de conteúdo não suportado.</p>`;
+      }
+      modalContent.innerHTML = html;
+      modal.style.display = 'flex';
+    }
+
+    modal.onclick = () => modal.style.display = 'none';
+
+    carregarCaixas();
+  </script>
+</body>
+</html>
